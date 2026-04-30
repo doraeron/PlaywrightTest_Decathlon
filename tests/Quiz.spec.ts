@@ -11,6 +11,7 @@ Assertion: Verify that the search results page loads successfully.*/
 
 test('Q1: Search & Verify',async({page})=>{
     const ToSearchProduct="camping tent";
+    await page.setViewportSize({ width: 1920, height: 1080 });
     await page.goto('https://www.decathlon.my/');
     
     const searchBox = page.getByPlaceholder(/Search/i);
@@ -35,6 +36,7 @@ test('Q2: Category Navigation (Clicks)', async({page})=>{
     const ToClickCategory2 = "Outdoor Sports";
     const ToClickCategory3 = "Climbing";
 
+    await page.setViewportSize({ width: 1920, height: 1080 });
     await page.goto('https://www.decathlon.my/')
     await page.locator('#headerBoxInBaseContainer a').filter({ hasText:ToClickCategory1 }).click();
     await page.getByText(ToClickCategory2).click();
