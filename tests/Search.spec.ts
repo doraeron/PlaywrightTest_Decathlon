@@ -29,7 +29,7 @@ const path = require('path');
 // Points the project folder & targeted file, send it to rawContent to be ready 
 // Parse the CSV file and create an array of products to buy
 const projectRoot = process.cwd();
-const csvFilePath = path.join(projectRoot, 'SampleProducts.csv'); 
+const csvFilePath = path.join(projectRoot,'tests', 'SampleProducts.csv'); 
 const rawContent = fs.readFileSync(csvFilePath, 'utf-8');
 
 // Now being cleaning, splits/ empty lines/ header row
