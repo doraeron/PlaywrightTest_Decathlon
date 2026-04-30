@@ -1,7 +1,7 @@
 import { test, expect,Page } from '@playwright/test';
 
 test('Single item : search & add to cart', async ({ page }) => {
-
+await page.setViewportSize({ width: 1280, height: 720 });
 await page.goto('https://www.decathlon.my/');
 
   // ENTER : needs update
@@ -57,6 +57,7 @@ console.log('\n=== 🔍 DEBUG: CHECKING PARSED DATA ===');
 console.table(productsToBuy);
 console.log('======================================\n');
 
+// Function - search + ATC that being use in single/multiple scenario
 async function addProductToCart(page: Page, sku: string, name: string) {
   console.log(`\n▶ Executing Add to Cart for: ${name} (SKU: ${sku})`);
   
@@ -88,6 +89,7 @@ async function addProductToCart(page: Page, sku: string, name: string) {
 
 test('Multiple items : search & add to cart', async ({ page }) => {
   // Step 1: Initial Navigation
+  await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto('https://www.decathlon.my/');
 
   // Optional: Handle cookies once before the loop starts
@@ -112,9 +114,4 @@ test('Multiple items : search & add to cart', async ({ page }) => {
   const expectedTotal = productsToBuy.reduce((sum: number, item: any) => sum + item.price, 0);
   console.log(`Expected Total from Data: RM ${expectedTotal.toFixed(2)}`);
 
-  // Assertion Placeholder: 
-  // You must use Codegen to find the exact locator for the final price on the Decathlon Cart page.
-  // Example:
-  // const uiTotalPrice = page.locator('.cart-total-price'); 
-  // await expect(uiTotalPrice).toContainText(expectedTotal.toString());
 });
