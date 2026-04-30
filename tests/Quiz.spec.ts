@@ -39,9 +39,9 @@ test('Q2: Category Navigation (Clicks)', async({page})=>{
     await page.setViewportSize({ width: 1920, height: 1080 });
     await page.goto('https://www.decathlon.my/')
     await page.locator('#headerBoxInBaseContainer a').filter({ hasText:ToClickCategory1 }).click();
-    await page.getByText(ToClickCategory2).click();
-    await page.getByText(ToClickCategory3).click();
-    await page.getByRole('link', { name: `${ToClickCategory3} View All` }).click();
+    await page.getByText(ToClickCategory2, { exact: true }).first().click();
+    await page.getByText(ToClickCategory3, { exact: true }).first().click();
+    await page.getByRole('link', { name: `${ToClickCategory3} View All` }).first().click();
     
     await expect(page).toHaveURL(new RegExp(ToClickCategory3, 'i'), { timeout: 15000 });
     await expect(page.getByText(new RegExp(ToClickCategory3, 'i')).first()).toBeVisible();
