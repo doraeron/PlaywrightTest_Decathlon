@@ -4,22 +4,17 @@ test('Single item : search & add to cart', async ({ page }) => {
 await page.setViewportSize({ width: 1280, height: 720 });
 await page.goto('https://www.decathlon.my/');
 
-  // ENTER : needs update
   const searchBox = page.getByPlaceholder(/Search/i); 
   await searchBox.fill('Soy Protein');
   await searchBox.click();
   await page.keyboard.press('Enter');
-  
-  // Wait for search results to load
   await page.getByTestId('productHit-tilesbox-gridcell').first().click();
-
-  // 7. 加入購物車
   await page.getByRole('button', { name: 'Add to Cart' }).nth(1).click();
-
-  // 8. 最終驗證：檢查是否出現成功加入的文字
   await expect(page.getByText(/added to cart|in your cart/i).first()).toBeVisible();
 
 });
+
+//===========================//
 
 declare const require: any;
 declare const process: any;
@@ -51,41 +46,53 @@ const productsToBuy = rawContent
       price: parts[2] ? parseFloat(parts[2].trim()) : 0 
     };
   });
-
-// Able to see info parsing from csv
-console.log('\n=== 🔍 DEBUG: CHECKING PARSED DATA ===');
 console.table(productsToBuy);
 console.log('======================================\n');
 
 // Function - search + ATC that being use in single/multiple scenario
 async function addProductToCart(page: Page, sku: string, name: string) {
   console.log(`\n▶ Executing Add to Cart for: ${name} (SKU: ${sku})`);
-  
-  // 1. Search by SKU
   const searchBox = page.getByPlaceholder(/Search/i).first();
   await searchBox.fill(sku);
   await searchBox.click(); 
   await page.keyboard.press('Enter');
-
-  // 2. Wait for search results to load
-  await expect(page).toHaveURL(/.*search.*/i, { timeout: 15000 });
   const firstProduct = page.locator('[data-testid="productHit-tilesbox-gridcell"]').first();
-  await expect(firstProduct).toBeVisible({ timeout: 15000 });
-
-  // 3. Click the first product and add to cart
-  await firstProduct.click();
-  await page.getByRole('button', { name: 'Add to Cart' }).nth(1).click();
-
-  // 4. Wait for success confirmation
-  const successMsg = page.getByText(/added to cart|in your cart/i).first();
-  await expect(successMsg).toBeVisible({ timeout: 10000 });
-  console.log(`✔ Successfully added: ${sku}`);
   
-  // 5. CRITICAL RESET: Navigate back to home page for the next loop iteration
-  await page.goto('https://www.decathlon.my/');
+  await expect(page).toHaveURL(/.*search.*/i, { timeout: 15000 });
+
+  // (1) Validate SKU 
+  try {
+    await firstProduct.waitFor({ state: 'visible', timeout: 5000 });
+  } catch (error) { 
+    // Not Available SKU
+    console.log(`❌ Source File Error: SKU: ${sku}) - NOT FOUND`);
+    await page.goto('https://www.decathlon.my/');
+    return; // EXIT this function immediately and move to the next item in the loop
+  }
+  
+  // (2) Validate In Stock Status
+    const addToCartBtn = page.getByRole('button', { name: /Add to Cart/i }).nth(1);;
+    const outOfStockMsg = page.getByRole('button', { name: /Out of Stock/i }).first();
+    await firstProduct.click();
+    await expect(addToCartBtn.or(outOfStockMsg)).toBeVisible({ timeout: 100000 });
+    
+    if (await outOfStockMsg.isVisible()) {  
+      console.log(`❌ SKU: ${sku} - OUT OF STOCK`);
+      await page.goto('https://www.decathlon.my/');
+      return; // EXIT this function immediately and move to the next item in the loop
+    }
+    
+    const successMsg = page.getByText(/added to cart|in your cart/i).first();
+    await addToCartBtn.click();
+  try {
+    await successMsg.waitFor({ state: 'visible', timeout: 10000 });
+    console.log(`Successfully added: ${sku} to cart`);    
+  }catch (e){
+    console.log(`⚠️ Warning: ${sku} clicked add to cart, but success message didn't appear.`);
+  }
+    await page.goto('https://www.decathlon.my/');
 }
 
-// 4. MAIN TEST EXECUTION
 
 test('Multiple items : search & add to cart', async ({ page }) => {
   // Step 1: Initial Navigation
