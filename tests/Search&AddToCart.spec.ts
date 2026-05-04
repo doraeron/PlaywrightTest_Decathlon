@@ -1,4 +1,5 @@
-import { test, expect,Page } from '@playwright/test';
+import { test, expect,Page } from '@playwright/test'
+
 
 test('Single item : search & add to cart', async ({ page }) => {
 await page.setViewportSize({ width: 1280, height: 720 });
@@ -13,9 +14,6 @@ await page.goto('https://www.decathlon.my/');
   await expect(page.getByText(/added to cart|in your cart/i).first()).toBeVisible();
 
 });
-
-//===========================//
-
 declare const require: any;
 declare const process: any;
 const fs = require('fs');
@@ -27,7 +25,7 @@ const projectRoot = process.cwd();
 const csvFilePath = path.join(projectRoot,'tests', 'SampleProducts.csv'); 
 const rawContent = fs.readFileSync(csvFilePath, 'utf-8');
 
-// Now being cleaning, splits/ empty lines/ header row
+// Cleaning, splits/ empty lines/ header row
 const productsToBuy = rawContent
   .split(/\r?\n|\r/)
   .filter((line: string) => {
