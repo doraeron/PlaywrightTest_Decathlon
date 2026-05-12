@@ -1,5 +1,4 @@
-import { test, expect,Page } from '@playwright/test'
-
+import { test, expect, Page } from '@playwright/test';
 
 test('Single item : search & add to cart', async ({ page }) => {
 await page.setViewportSize({ width: 1280, height: 720 });
