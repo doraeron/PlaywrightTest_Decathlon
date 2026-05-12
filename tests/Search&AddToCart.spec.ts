@@ -47,7 +47,7 @@ const productsToBuy = rawContent
 console.table(productsToBuy);
 console.log('======================================\n');
 
-// Function - search + ATC that being use in single/multiple scenario
+// Function - Search + ATC 
 async function addProductToCart(page: Page, sku: string, name: string) {
   console.log(`\n▶ Executing Add to Cart for: ${name} (SKU: ${sku})`);
   const searchBox = page.getByPlaceholder(/Search/i).first();
