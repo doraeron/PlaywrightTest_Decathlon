@@ -132,7 +132,7 @@ async function addProductToCart(page: Page, sku: string, name: string, intendedS
         await sizeOption.evaluate((element: any) => element.click()); 
 
         await performAddToCart(page, sku);
-      } else {
+      } else if (statusText.toLowerCase().includes('Check Store Availability')) { //added for OOS status text appears on dropdown
         console.log(`❌ SKU: ${sku} - ${intendedSize} is OUT OF STOCK (${statusText.trim()}).`);
         await page.keyboard.press('Escape');
       }
