@@ -22,7 +22,8 @@ How to Run:
 2. Terminal to run: npx playwright test --ui
 3. Click play button (can choose "(2)Multiple items : search & add to cart" to see whole running process of the function)
 
+
 Example Output:
-<img width="3360" height="2100" alt="image" src="https://github.com/user-attachments/assets/cd6a1c14-3204-4f02-a327-6459afe26cce" />
+<img width="2000" height="1800" alt="image" src="https://github.com/user-attachments/assets/cd6a1c14-3204-4f02-a327-6459afe26cce" />
 Exported Execution Result:
-<img width="1966" height="776" alt="image" src="https://github.com/user-attachments/assets/96839dd4-3573-4f9b-8b47-945526d8bd7a" />
+<img width="2000" height="1800" alt="image" src="https://github.com/user-attachments/assets/96839dd4-3573-4f9b-8b47-945526d8bd7a" />
