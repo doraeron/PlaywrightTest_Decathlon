@@ -3,7 +3,8 @@ Project Title & Goal: Automated E-Commerce Testing Suite for Decathlon MY
 Tech Stack: Playwright, TypeScript, Node.js
 
 Features: 
-1. CSV Data-Driven Testing - Parsing data in CSV [SampleProducts] to being use in add to cart function.
+1.0 CSV Data-Driven Testing - Parsing data in CSV [SampleProducts] to being use in add to cart function.
+1.1 Exported Result: data written to CSV, auto replace after executions.
 
   
 2. Check on targeted product availability
@@ -12,7 +13,7 @@ Features:
 
 
 3. Dynamic size selection:
-- If ❌ size given in csv + ❌ size option on product page = add to cart
+- If ❌ size given in csv + ❌ size option on product page = add to cart if available
 - If ❌ size given in csv + ✅ size option on product page = request tester to modify csv
 - If ✅ size given in csv + ✅ size option on product page = add correct size to cart [both in stock and low stock, need or dont need scrolling]
 - If ✅ size given in csv + size option Out Of Stock on product page = prompt out of stock
@@ -24,3 +25,5 @@ How to Run:
 
 Example Output:
 <img width="3360" height="2100" alt="image" src="https://github.com/user-attachments/assets/cd6a1c14-3204-4f02-a327-6459afe26cce" />
+Exported Execution Result:
+<img width="1966" height="776" alt="image" src="https://github.com/user-attachments/assets/96839dd4-3573-4f9b-8b47-945526d8bd7a" />
