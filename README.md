@@ -1,16 +1,15 @@
-Project Title & Goal: Automated E-Commerce Testing Suite for Decathlon MY
+Project Title: Automated E-Commerce Testing Suite for Decathlon MY
 
 Tech Stack: Playwright, TypeScript, Node.js
 
 Features: 
-1.0 CSV Data-Driven Testing - Parsing data in CSV [SampleProducts] to being use in add to cart function.
-1.1 Exported Result: data written to CSV, auto replace after executions.
-
+1. CSV Data-Driven Testing
+   - Parsing data in CSV [SampleProducts] to being use in add to cart function.
+   - Exported Result: data written to CSV, auto replace after executions.
   
 2. Check on targeted product availability
 - If SKU not able to search, then prompt product not available
 - If SKU searched but out of stock, then prompt OOS
-
 
 3. Dynamic size selection:
 - If ❌ size given in csv + ❌ size option on product page = add to cart if available
