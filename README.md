@@ -24,6 +24,6 @@ How to Run:
 
 
 Example Output:
-<img width="2000" height="1800" alt="image" src="https://github.com/user-attachments/assets/cd6a1c14-3204-4f02-a327-6459afe26cce" />
+<img width="1900" height="1200" alt="image" src="https://github.com/user-attachments/assets/cd6a1c14-3204-4f02-a327-6459afe26cce" />
 Exported Execution Result:
-<img width="2000" height="1800" alt="image" src="https://github.com/user-attachments/assets/96839dd4-3573-4f9b-8b47-945526d8bd7a" />
+<img width="1900" height="700" alt="image" src="https://github.com/user-attachments/assets/96839dd4-3573-4f9b-8b47-945526d8bd7a" />
