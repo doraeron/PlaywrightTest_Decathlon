@@ -1,8 +1,8 @@
 import { test, expect, Page } from '@playwright/test';
 
 test('(1) Single item : search & add to cart', async ({ page }) => {
-await page.setViewportSize({ width: 1280, height: 720 });
-await page.goto('https://www.decathlon.my/');
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto('https://www.decathlon.my/');
 
   const searchBox = page.getByPlaceholder(/Search/i); 
   
@@ -14,56 +14,67 @@ await page.goto('https://www.decathlon.my/');
   await page.getByTestId('productHit-tilesbox-gridcell').first().click();
   await page.getByRole('button', { name: 'Add to Cart' }).nth(1).click();
   await expect(page.getByText(/added to cart|in your cart/i).first()).toBeVisible();
-
 });
+
 declare const require: any;
 declare const process: any;
 const fs = require('fs');
 const path = require('path');
 
+// Define structured item tracking type interface
+interface ProductItem {
+  sku: string;
+  name: string;
+  price: number;
+  size: string;
+  status: 'Added' | 'Failed' | 'Out of Stock' | 'Skipped due to missing size' | '-';
+}
+
 // Points the project folder & targeted file, send it to rawContent to be ready 
-// Parse the CSV file and create an array of products to buy
 const projectRoot = process.cwd();
-const csvFilePath = path.join(projectRoot,'tests','SampleProducts.csv'); 
-const rawContent = fs.readFileSync(csvFilePath,'utf-8');
+const csvFilePath = path.join(projectRoot, 'tests', 'SampleProducts.csv'); 
+const rawContent = fs.readFileSync(csvFilePath, 'utf-8');
 
 // Cleaning, splits/ empty lines/ header row
-const productsToBuy = rawContent
+const productsToBuy: ProductItem[] = rawContent
   .split(/\r?\n|\r/)
   .filter((line: string) => {
     const cleanLine = line.trim();
     return cleanLine !== '' && !cleanLine.toLowerCase().includes('sku'); 
   })
-
   // Data Mapping: CSV split by comma, remove empty lines & header row
   .map((line: string) => {
-  const rawParts = line.split(',');
-  let parts = rawParts.map(p => p.trim());
-  while (parts.length > 0 && parts[parts.length - 1] === '') {
-    parts.pop();
-  }
-  // Backwards Mapping: SKU first, Price last, Size second to last
-  const sku = parts[0];
-  const priceString = parts[parts.length - 1];
-  const sizeRaw = parts[parts.length - 2]; 
-  // If size not given in CSV, default to "No Size"
-  const size = (sizeRaw === '' || !sizeRaw) ? 'No Size' : sizeRaw;
-  // Name: takes everything in between, to handle " or ' in product name
-  const name = parts.slice(1, parts.length - 2).join(', ').replace(/"/g, '');
+    const rawParts = line.split(',');
+    let parts = rawParts.map(p => p.trim());
+    while (parts.length > 0 && parts[parts.length - 1] === '') {
+      parts.pop();
+    }
+    // Backwards Mapping: SKU first, Price last, Size second to last
+    const sku = parts[0];
+    const priceString = parts[parts.length - 1];
+    const sizeRaw = parts[parts.length - 2]; 
+    // If size not given in CSV, default to "No Size"
+    const size = (sizeRaw === '' || !sizeRaw) ? 'No Size' : sizeRaw;
+    // Name: takes everything in between, to handle " or ' in product name
+    const name = parts.slice(1, parts.length - 2).join(', ').replace(/"/g, '');
 
-  return {
-    sku: sku,
-    name: name,
-    price: parseFloat(priceString.replace(/[^0-9.]/g, '')) || 0, 
-    size: size
-  };
-});
+    return {
+      sku: sku,
+      name: name,
+      price: parseFloat(priceString.replace(/[^0-9.]/g, '')) || 0, 
+      size: size,
+      status: '-' 
+    };
+  });
 
-console.table(productsToBuy);
+// REMAINING: Keep the console table structure active on initial data boot up sequence
+console.log('📋 Parsed CSV Product Array Template Loaded:');
+console.table(productsToBuy, ['sku', 'name', 'size', 'price', 'status']);
 console.log('\n');
 
 // Function - Search + Add To Cart
-async function addProductToCart(page: Page, sku: string, name: string, intendedSize: string) {
+async function addProductToCart(page: Page, product: ProductItem) {
+  const { sku, name, size: intendedSize } = product;
   console.log(`\n▶ Processing: ${name} (SKU: ${sku})`);
   const searchBox = page.getByPlaceholder(/Search/i).first();
   
@@ -86,7 +97,8 @@ async function addProductToCart(page: Page, sku: string, name: string, intendedS
     await firstProduct.waitFor({ state: 'visible', timeout: 10000 });
     await firstProduct.click();
   } catch (error) {
-    console.log(`❌ SKU: ${sku} - Not an available SKU.`);
+    console.log(`\x1b[31m❌ SKU: ${sku} - Not an available SKU.\x1b[0m`);
+    product.status = 'Failed';
     await page.goto('https://www.decathlon.my/');
     return;
   }
@@ -94,83 +106,116 @@ async function addProductToCart(page: Page, sku: string, name: string, intendedS
   await page.waitForLoadState('networkidle');
   await page.waitForTimeout(3000); 
 
-  // Sizing Logic
+  // =========================================================================
+  // CRITICAL PRIORITY STEP: DYNAMIC OUT-OF-STOCK SHORT-CIRCUIT GUARD
+  // =========================================================================
+  const globalSizeBlock = page.locator('div').filter({ hasText: /Select your size|No Size/i }).nth(1);
+  const primaryActionButton = page.getByRole('button', { name: /Add to Cart|OUT OF STOCK/i }).nth(1);
+
+  let selectorTextContext = '';
+  let buttonTextContext = '';
+
+  if (await globalSizeBlock.count() > 0) {
+    selectorTextContext = (await globalSizeBlock.innerText()).replace(/\s+/g, ' '); 
+  }
+  if (await primaryActionButton.count() > 0) {
+    buttonTextContext = await primaryActionButton.innerText();
+  }
+
+  if (
+    selectorTextContext.toLowerCase().includes('check store availability') || 
+    buttonTextContext.toLowerCase().includes('out of stock')
+  ) {
+    console.log(`\x1b[31m❌ SKU: ${sku} - ${intendedSize} is OUT OF STOCK (${selectorTextContext.trim()}).\x1b[0m`);
+    product.status = 'Out of Stock'; 
+    await page.keyboard.press('Escape');
+    await page.goto('https://www.decathlon.my/');
+    return; 
+  }
+  // =========================================================================
+
+  // Sizing Logic Flow
   const dropdownPlaceholder = page.locator('div').filter({ hasText: /^Select your size$|^No Size$/ }).first();
   const isDropdownVisible = await dropdownPlaceholder.isVisible();
   const dropdownText = await dropdownPlaceholder.innerText();
 
-  // RULE 1: No Size Product - In CSV & Product Page -- Add To Cart Instantly
+  // RULE 1: No Size Product
   if (!isDropdownVisible || dropdownText.includes('No Size')) {
     console.log(`📦 No Size required for this product - Adding to cart`);
-    await performAddToCart(page, sku);
-    await page.goto('https://www.decathlon.my/cart');
+    const success = await performAddToCart(page, sku);
+    product.status = success ? 'Added' : 'Failed';
   } 
-  // RULE 2: Sizing Product - If a size is intended and the dropdown is active
+  // RULE 2: Sizing Product
   else if (intendedSize && intendedSize.toLowerCase() !== "no size") {
     await dropdownPlaceholder.click();
     await page.waitForTimeout(1000); 
     
     console.log(`🔍 Machine is looking for: "${intendedSize}" with Stock Status...`);
 
-    // Look for the 'option' role with matching size text
     const sizeOption = page.locator('[role="option"]').filter({
       has: page.locator('[data-testid="option-label"]').filter({ hasText: new RegExp(`^${intendedSize}$`, 'i') })
     });
 
     try {
-      // Wait: Attached to the DOM (it doesn't need to be visible on screen)
       await sizeOption.waitFor({ state: 'attached', timeout: 5000 });
 
-      // Bypass textContent(): reads raw code, able to capture stock status even if hidden behind scrollbar.
       const stockElement = sizeOption.getByTestId('option-status');
       const statusText = await stockElement.textContent() || ''; 
 
       if (statusText.toLowerCase().includes('in stock') || statusText.toLowerCase().includes('low stock')) {
         console.log(`✅ Size ${intendedSize} is ${statusText.trim()}. Selecting...`);
         
-        //raw JavaScript click: skips Playwright's scroll-and-click checks.
         await sizeOption.evaluate((element: any) => element.click()); 
 
-        await performAddToCart(page, sku);
-      } else if (statusText.toLowerCase().includes('Check Store Availability')) { //added for OOS status text appears on dropdown
-        console.log(`❌ SKU: ${sku} - ${intendedSize} is OUT OF STOCK (${statusText.trim()}).`);
+        const success = await performAddToCart(page, sku);
+        product.status = success ? 'Added' : 'Failed';
+      } else {
+        console.log(`\x1b[31m❌ SKU: ${sku} - ${intendedSize} is OUT OF STOCK (${statusText.trim()}).\x1b[0m`);
+        product.status = 'Out of Stock';
         await page.keyboard.press('Escape');
       }
     } catch (e) {
-      console.log(`❌ SKU: ${sku} - Could not find size option "${intendedSize}".`);
+      console.log(`\x1b[31m❌ SKU: ${sku} - Could not find size option "${intendedSize}".\x1b[0m`);
+      product.status = 'Failed';
       await page.keyboard.press('Escape'); 
     }
   }
-
   // RULE 3: Dropdown exists but no size was provided in CSV
   else {
     console.log(`⚠️ SKU: ${sku} requires a size, but none was provided in CSV. Skipping...`);
+    product.status = 'Skipped due to missing size';
   }
 
   await page.goto('https://www.decathlon.my/');
 }
 
-async function performAddToCart(page: Page, sku: string) {
-  const addToCartBtn = page.getByRole('button', { name: /Add to Cart/i }).nth(1);
+async function performAddToCart(page: Page, sku: string): Promise<boolean> {
+  const addToCartBtn = page.getByRole('button', { name: /Add to Cart|OUT OF STOCK/i}).nth(1);
   await addToCartBtn.waitFor({ state: 'visible' });
   
+  if (await addToCartBtn.innerText().then(t => t.toLowerCase().includes('out of stock'))) {
+    console.log(`\x1b[31m❌ SKU: ${sku} - Action Button locked as Out Of Stock.\x1b[0m`);
+    return false;
+  }
+
   await addToCartBtn.click({ force: true });
   const successMsg = page.getByText(/added to cart|in your cart/i).first();
   try {
     await successMsg.waitFor({ state: 'visible', timeout: 10000 });
     console.log(`✅ Success: ${sku} is confirmed in cart.`);
+    return true;
   } catch (e) {
     console.log(`⚠️ Warning: ${sku} clicked but no confirmation seen. It might have failed.`);
+    return false;
   }
 }
-
 
 test('(2)Multiple items : search & add to cart', async ({ page }) => {
   test.setTimeout(180000); 
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto('https://www.decathlon.my/', { waitUntil: 'domcontentloaded' });
   
-  //Pre handling Cookies, ignore if not appear
+  // Pre handling Cookies
   const acceptBtn = page.getByRole('button', { name: 'Got It' });
   try {
     await acceptBtn.waitFor({ state: 'visible', timeout: 3000 });
@@ -178,36 +223,65 @@ test('(2)Multiple items : search & add to cart', async ({ page }) => {
   } catch (error) {
   }
 
-  // Loop through CSV products & to add each to cart
+  // Loop through CSV products
   for (const product of productsToBuy) {
-    await addProductToCart(page, product.sku, product.name, product.size); 
+    await addProductToCart(page, product); 
   }
 
   // Final Cart Validation
-  console.log('\nAll SKUs added successfully. Proceeding to cart validation.');
+  console.log('\n======================================================');
+  console.log('🏁 All SKUs processed. Compiling final verification dashboards:');
+  console.log('======================================================');
+  
   await page.goto('https://www.decathlon.my/cart', { waitUntil: 'domcontentloaded' });
-
-  // To Add - Print the updated (console.table(productsToBuy) with column (1) Status: Added/Failed (2) Cart Total
-  
-  
-  /* OLD -- compare expected total with displayed total --
-
-  // ⚠️ Extract the displayed total from the cart page
   await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(3000); 
-  const totalLocator = page.locator('text=Total').first();
-  await totalLocator.waitFor({ state: 'visible', timeout: 10000 });
-  const totalText = await totalLocator.textContent() || '';
-  const displayedTotalMatch = totalText.match(/RM\s?([\d,.]+)/i);
-  const displayedTotal = displayedTotalMatch ? parseFloat(displayedTotalMatch[1].replace(/,/g, '')) : 0;
-  console.log(`Displayed Total in Cart: RM ${displayedTotal.toFixed(2)}`);
+  await page.waitForTimeout(4000);
 
-  // ⚠️ Final Assertion: Compare expected total with displayed total
+  // Post-test results list layout tracking
+  console.log('Cart Items');
+  productsToBuy.forEach((product, index) => {
+    console.log(`${index + 1}. ${product.sku} - ${product.name} - ${product.size} - RM ${product.price.toFixed(2)} - ${product.status}`);
+  });
+
+  let liveCartTotalValue = 'RM 0.00';
   try {
-    expect(displayedTotal).toBeCloseTo(expectedTotal, 2);
-    console.log('✅ Cart Total Validation Passed!');
-  } catch (error) {
-    console.log('❌ Cart Total Validation Failed. There might be a discrepancy in pricing or items added.');
-  }*/
+    const totalBlock = page.locator('[class*="summary"], [class*="total"]').locator('text=/RM\\s*\\d+/i').first();
+    if (await totalBlock.isVisible()) {
+      liveCartTotalValue = await totalBlock.innerText();
+    } else {
+      const computedTotal = productsToBuy
+        .filter(item => item.status === 'Added')
+        .reduce((sum, item) => sum + item.price, 0);
+      liveCartTotalValue = `RM ${computedTotal.toFixed(2)} (Calculated from Added Array)`;
+    }
+  } catch (e) {
+    console.log('\x1b[31m⚠️ Attention: Unable to directly extract running total values from UI wrapper elements.\x1b[0m');
+    const computedTotal = productsToBuy
+      .filter(item => item.status === 'Added')
+      .reduce((sum, item) => sum + item.price, 0);
+    liveCartTotalValue = `RM ${computedTotal.toFixed(2)} (Calculated from Added Array)`;
+  }
+  
+  console.log(`\n💰 Final Checkout: ${liveCartTotalValue.trim()}`);
+  console.log('======================================================\n');
 
+  // =========================================================================
+  // AUTOMATED FILE REPLACEMENT SYSTEM (OVERWRITES CLEANLY ON RUNTIME)
+  // =========================================================================
+  const outputCsvFilePath = path.join(projectRoot, 'tests', 'ExecutionResults.csv');
+  let csvContent = 'SKU,Product Name,Size,Price,Execution Status\n';
+  
+  productsToBuy.forEach((product) => {
+    const sanitizedName = product.name.replace(/,/g, ''); // Stop commas from breaking columns
+    csvContent += `${product.sku},${sanitizedName},${product.size},RM ${product.price.toFixed(2)},${product.status}\n`;
+  });
+  
+  try {
+    // fs.writeFileSync automatically truncates and completely overrides the old sheet
+    fs.writeFileSync(outputCsvFilePath, csvContent, 'utf-8');
+    console.log(`💾 Auto-Replace Success: Final run logged fresh at: ${outputCsvFilePath}`);
+  } catch (err) {
+    console.log(`\x1b[31m❌ Export Error: Could not overwrite data matrix to file system: ${err}\x1b[0m`);
+  }
+  // =========================================================================
 });
