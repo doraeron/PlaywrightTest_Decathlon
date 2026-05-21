@@ -67,11 +67,6 @@ const productsToBuy: ProductItem[] = rawContent
     };
   });
 
-// REMAINING: Keep the console table structure active on initial data boot up sequence
-console.log('📋 Parsed CSV Product Array Template Loaded:');
-console.table(productsToBuy, ['sku', 'name', 'size', 'price', 'status']);
-console.log('\n');
-
 // Function - Search + Add To Cart
 async function addProductToCart(page: Page, product: ProductItem) {
   const { sku, name, size: intendedSize } = product;
@@ -210,8 +205,27 @@ async function performAddToCart(page: Page, sku: string): Promise<boolean> {
   }
 }
 
-test('(2)Multiple items : search & add to cart', async ({ page }) => {
+test('(2) Multiple items : search & add to cart', async ({ page }) => {
   test.setTimeout(180000); 
+  // Replace console table - only triggers when running this test
+  console.log('📋 Parsed CSV Product Array Template Loaded:');
+
+
+  // Create an Object instead of an Array to force the index to start at 1
+  const displayTable: Record<string, any> = {};
+  
+  productsToBuy.forEach((p, index) => {
+    displayTable[index + 1] = {
+      sku: p.sku,
+      name: p.name.length > 25 ? p.name.substring(0, 22) + '...' : p.name, // Truncates long names
+      size: p.size,
+      price: p.price,
+      status: p.status
+    };
+  });
+  console.log('\n');
+  console.table(displayTable,['sku', 'name', 'size', 'price', 'status']);
+  
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto('https://www.decathlon.my/', { waitUntil: 'domcontentloaded' });
   
@@ -238,7 +252,7 @@ test('(2)Multiple items : search & add to cart', async ({ page }) => {
   await page.waitForTimeout(4000);
 
   // Post-test results list layout tracking
-  console.log('Cart Items');
+  console.log('Product Status Summary:');
   productsToBuy.forEach((product, index) => {
     console.log(`${index + 1}. ${product.sku} - ${product.name} - ${product.size} - RM ${product.price.toFixed(2)} - ${product.status}`);
   });

@@ -1,5 +1,7 @@
 import {test,expect} from '@playwright/test';
 
+// UI QUIZ// 
+
 /* Scenario 1: The Basic Search & Verify Flow
 1. Navigate to the Decathlon Malaysia homepage (https://www.decathlon.my/).
 2. Locate the main search bar.
@@ -9,7 +11,7 @@ import {test,expect} from '@playwright/test';
 6. At least one product card is visible OR that the search results title (e.g., "Search results for camping tent") is displayed.
 Assertion: Verify that the search results page loads successfully.*/
 
-test('Q1: Search & Verify',async({page})=>{
+test('UI Q1: Search & Verify',async({page})=>{
     const ToSearchProduct="camping tent";
     await page.setViewportSize({ width: 1920, height: 1080 });
     await page.goto('https://www.decathlon.my/');
@@ -31,7 +33,7 @@ test('Q1: Search & Verify',async({page})=>{
 Assertion: Verify that you have successfully landed on the correct category page. 
 You can do this by asserting that the main header text (<h1>) of the new page matches the sub-category you clicked, or by checking the URL.
 */
-test('Q2: Category Navigation (Clicks)', async({page})=>{
+test('UI Q2: Category Navigation (Clicks)', async({page})=>{
     const ToClickCategory1 = "Sports";
     const ToClickCategory2 = "Outdoor Sports";
     const ToClickCategory3 = "Climbing";
@@ -47,3 +49,26 @@ test('Q2: Category Navigation (Clicks)', async({page})=>{
     await expect(page.getByText(new RegExp(ToClickCategory3, 'i')).first()).toBeVisible();
 })
     
+// API QUIZ //
+/*
+Scenario 1: The Direct Backend Search (Pure API)
+Objective: Verify that the Decathlon search API returns correct data without using the browser.
+Your Mission:
+1. Open the Decathlon MY website manually, press F12 to open DevTools, and go to the Network tab.
+2. Search for "Tent" and find the backend API URL that Decathlon actually calls to fetch the results (Look for a request that returns a JSON file with product names).
+3. Create a new Playwright test using ({ request }) instead of ({ page }).
+4. Send a request.get() to that API URL.
+
+Assert 1: Check that the response status is 200.
+Assert 2: Parse the JSON response and assert that the results array contains more than 0 items.*/
+
+test('API Q1: Direct Backend Search', async({ request })=>{
+    const SearchKeyword = "Tent";
+    const APIUrl = `https://www.decathlon.my/search?query=${SearchKeyword}`;
+
+    const response = await request.get(APIUrl);
+    expect(response.status()).toBe(200);
+
+    const responseData = await response.json();
+    expect(responseData.results.length).toBeGreaterThan(0);
+})
