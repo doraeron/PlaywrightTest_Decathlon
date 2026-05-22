@@ -1,6 +1,6 @@
 import { test, expect, Page } from '@playwright/test';
 
-test('(1) Single item : search & add to cart', async ({ page }) => {
+test('(1) Hard Coded - Single item : search & add to cart', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto('https://www.decathlon.my/');
 
@@ -205,7 +205,7 @@ async function performAddToCart(page: Page, sku: string): Promise<boolean> {
   }
 }
 
-test('(2) Multiple items : search & add to cart', async ({ page }) => {
+test('(2) CSV Parsed - Multiple items : search & add to cart', async ({ page }) => {
   test.setTimeout(180000); 
   // Replace console table - only triggers when running this test
   console.log('📋 Parsed CSV Product Array Template Loaded:');
