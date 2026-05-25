@@ -101,9 +101,6 @@ async function addProductToCart(page: Page, product: ProductItem) {
   await page.waitForLoadState('networkidle');
   await page.waitForTimeout(3000); 
 
-  // =========================================================================
-  // CRITICAL PRIORITY STEP: DYNAMIC OUT-OF-STOCK SHORT-CIRCUIT GUARD
-  // =========================================================================
   const globalSizeBlock = page.locator('div').filter({ hasText: /Select your size|No Size/i }).nth(1);
   const primaryActionButton = page.getByRole('button', { name: /Add to Cart|OUT OF STOCK/i }).nth(1);
 
@@ -209,7 +206,6 @@ test('(2) CSV Parsed - Multiple items : search & add to cart', async ({ page }) 
   test.setTimeout(180000); 
   // Replace console table - only triggers when running this test
   console.log('📋 Parsed CSV Product Array Template Loaded:');
-
 
   // Create an Object instead of an Array to force the index to start at 1
   const displayTable: Record<string, any> = {};
