@@ -1,6 +1,16 @@
 import { test, expect, Page } from '@playwright/test';
 
-test('(1) Hard Coded - Single item : search & add to cart', async ({ page }) => {
+//Enable tests to run in sequence using shared state
+test.describe.configure({ mode: 'serial' });
+let sharedPage: Page;
+test.beforeAll(async ({ browser }) => {
+  // Create a single browser context that persists through the lifecycle
+  const context = await browser.newContext();
+  sharedPage = await context.newPage();
+});
+
+/** Retired - Hardcoded upgraded to CSV driven reading - See 1.1 for the new version 
+ * test('1.1 Hard Coded - Single item search & ATC', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto('https://www.decathlon.my/');
 
@@ -14,7 +24,7 @@ test('(1) Hard Coded - Single item : search & add to cart', async ({ page }) => 
   await page.getByTestId('productHit-tilesbox-gridcell').first().click();
   await page.getByRole('button', { name: 'Add to Cart' }).nth(1).click();
   await expect(page.getByText(/added to cart|in your cart/i).first()).toBeVisible();
-});
+});**/
 
 declare const require: any;
 declare const process: any;
@@ -94,12 +104,12 @@ async function addProductToCart(page: Page, product: ProductItem) {
   } catch (error) {
     console.log(`\x1b[31m❌ SKU: ${sku} - Not an available SKU.\x1b[0m`);
     product.status = 'Failed';
-    await page.goto('https://www.decathlon.my/');
+    await sharedPage.goto('https://www.decathlon.my/');
     return;
   }
 
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(3000); 
+  await sharedPage.waitForLoadState('networkidle');
+  await sharedPage.waitForTimeout(3000); 
 
   const globalSizeBlock = page.locator('div').filter({ hasText: /Select your size|No Size/i }).nth(1);
   const primaryActionButton = page.getByRole('button', { name: /Add to Cart|OUT OF STOCK/i }).nth(1);
@@ -121,7 +131,7 @@ async function addProductToCart(page: Page, product: ProductItem) {
     console.log(`\x1b[31m❌ SKU: ${sku} - ${intendedSize} is OUT OF STOCK (${selectorTextContext.trim()}).\x1b[0m`);
     product.status = 'Out of Stock'; 
     await page.keyboard.press('Escape');
-    await page.goto('https://www.decathlon.my/');
+    await sharedPage.goto('https://www.decathlon.my/');
     return; 
   }
   // =========================================================================
@@ -178,7 +188,7 @@ async function addProductToCart(page: Page, product: ProductItem) {
     product.status = 'Skipped due to missing size';
   }
 
-  await page.goto('https://www.decathlon.my/');
+  await sharedPage.goto('https://www.decathlon.my/');
 }
 
 async function performAddToCart(page: Page, sku: string): Promise<boolean> {
@@ -202,7 +212,7 @@ async function performAddToCart(page: Page, sku: string): Promise<boolean> {
   }
 }
 
-test('(2) CSV Parsed - Multiple items : search & add to cart', async ({ page }) => {
+test('1.1 CSV Parsed - Multiple items search & ATC', async ({ page }) => {
   test.setTimeout(180000); 
   // Replace console table - only triggers when running this test
   console.log('📋 Parsed CSV Product Array Template Loaded:');
@@ -223,7 +233,7 @@ test('(2) CSV Parsed - Multiple items : search & add to cart', async ({ page }) 
   console.table(displayTable,['sku', 'name', 'size', 'price', 'status']);
   
   await page.setViewportSize({ width: 1280, height: 720 });
-  await page.goto('https://www.decathlon.my/', { waitUntil: 'domcontentloaded' });
+  await sharedPage.goto('https://www.decathlon.my/', { waitUntil: 'domcontentloaded' });
   
   // Pre handling Cookies
   const acceptBtn = page.getByRole('button', { name: 'Got It' });
@@ -243,7 +253,7 @@ test('(2) CSV Parsed - Multiple items : search & add to cart', async ({ page }) 
   console.log('🏁 All SKUs processed. Compiling final verification dashboards:');
   console.log('======================================================');
   
-  await page.goto('https://www.decathlon.my/cart', { waitUntil: 'domcontentloaded' });
+  await sharedPage.goto('https://www.decathlon.my/cart', { waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
   await page.waitForTimeout(4000);
 
@@ -294,4 +304,21 @@ test('(2) CSV Parsed - Multiple items : search & add to cart', async ({ page }) 
     console.log(`\x1b[31m❌ Export Error: Could not overwrite data matrix to file system: ${err}\x1b[0m`);
   }
   // =========================================================================
+});
+
+// Cart Management Test Cases
+// Increase quantity - Reduce quantity 
+// Edit Size - Edit Quantity
+// Delete Item
+
+test ('2.1 Cart Managing: Increase/ Reduce quantity', async ({ page }) => {
+    
+});
+
+test ('2.2 Cart Managing: Edit Size/ Quantity', async ({ page }) => {
+    // Test implementation here
+});
+
+test ('2.3 Cart Managing: Delete Item', async ({ page }) => {
+    // Test implementation here
 });

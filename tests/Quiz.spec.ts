@@ -73,30 +73,36 @@ Your Mission:
 Assert 1: Check that the response status is 200.
 Assert 2: Parse the JSON response and assert that the results array contains more than 0 items.*/
 
-test('API Q1: Intercepting Batch Algolia Search Products', async ({ page }) => {
-  // 1. Setup a defensive network listener before performing UI actions
-  const algoliaResponsePromise = page.waitForResponse(response => 
-    response.url().includes('algolia.net/1/indexes/*/queries') && 
-    response.request().method() === 'POST'
-  );
+test('API Q1: Intercepting Batch Algolia Search Products', async ({ request }) => {
+  const keyword = "tent";
 
-  // 2. Perform the UI search interaction
-  await page.setViewportSize({ width: 1280, height: 720 });
-  await page.goto('https://www.decathlon.my/');
-  
-  const searchBox = page.getByPlaceholder(/Search/i).first();
-  await searchBox.waitFor({ state: 'visible' });
-  await searchBox.fill('tent');
-  await searchBox.click();
-  await page.keyboard.press('Enter');
+  // 直接使用 request.post 戳 Algolia 的端點
+  const response = await request.post('https://v7690g9unr-dsn.algolia.net/1/indexes/*/queries', {
+    params: {
+      'x-algolia-agent': 'Algolia for JavaScript (4.24.0); Browser',
+      'x-algolia-application-id': '881QSJP9WQ', 
+      'x-algolia-api-key': 'b3ad35c11c499db672254417a8bdb494'
+    },
+    headers: {
+      'Content-Type': 'application/json',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    },
+    data: {
+      requests: [
+        {
+          indexName: 'prod_pim_v2_index', 
+          params: `query=${keyword}&hitsPerPage=21&facetFilters=[]` 
+        }
+      ]
+    }
+  });
 
-  const response = await algoliaResponsePromise;
+  expect(response.status()).toBe(200);
+
   const responseData = await response.json();
-
-  console.log('\n--- Algolia Batch Response Intercepted ---');
+  console.log('\n--- Pure Algolia Response Received ---');
 
   if (responseData && Array.isArray(responseData.results)) {
-    // The 3rd block (index 2) maps to 'prod_pim_v2_index'
     const productResultBlock = responseData.results.find(
       (res: any) => res.indexName === 'prod_pim_v2_index'
     );
@@ -105,16 +111,14 @@ test('API Q1: Intercepting Batch Algolia Search Products', async ({ page }) => {
       const products = productResultBlock.hits;
       console.log(`✅ Success: Found ${products.length} products inside PIM index.`);
       
-      // Print out information from the first matching search hit
       const firstProduct = products[0];
       console.log(`First Product Title: ${firstProduct.name || firstProduct.title}`);
       console.log(`First Product Price: RM ${firstProduct.price}`);
       console.log(`First Product SKU/ID: ${firstProduct.objectID}`);
       
-      // Basic API functional validation assertion
       expect(products.length).toBeGreaterThan(0);
     } else {
-      console.log('⚠️ Warning: Captured batch response, but prod_pim_v2_index was missing or empty.');
+      console.log('⚠️ Warning: prod_pim_v2_index was missing or empty.');
     }
   } else {
     console.log('❌ Error: Response data structure unexpected or malformed.');
