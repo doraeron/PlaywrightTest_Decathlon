@@ -312,11 +312,29 @@ test('1.1 CSV Parsed - Multiple items search & ATC', async ({ page }) => {
 // Delete Item
 
 test ('2.1 Cart Managing: Increase/ Reduce quantity', async ({ page }) => {
-    
+    /* 
+    Amend with + - button in cart page, validate the quantity change and price change accordingly
+    1- Navigate to Cart page
+    2- For each item in cart, try to increase quantity by 1, then validate if the quantity has been updated and the price is correct
+    3- Then try to reduce the quantity by 1, and validate again
+    */
 });
 
 test ('2.2 Cart Managing: Edit Size/ Quantity', async ({ page }) => {
-    // Test implementation here
+    /*
+    Initialize:
+    - Navigate to Cart page
+    - For each item in cart, try to click on Edit button
+
+    - Change the quantity, validate if the changes are reflected in cart and price is updated accordingly 
+    -> edge case: change to 999
+    -> edge case: change to 0
+
+    - Change the size, validate if the changes are reflected in cart is updated 
+    -> size = out of stock, it should show out of stock message and not allow to update to that size. 
+
+
+    */
 });
 
 test ('2.3 Cart Managing: Delete Item', async ({ page }) => {
