@@ -9,8 +9,8 @@ test.beforeAll(async ({ browser }) => {
   sharedPage = await context.newPage();
 });
 
-/** Retired - Hardcoded upgraded to CSV driven reading - See 1.1 for the new version 
- * test('1.1 Hard Coded - Single item search & ATC', async ({ page }) => {
+//Retired - Hardcoded upgraded to CSV driven reading - See 1.1 for the new version 
+  test('1.0 Hard Coded - Single item search & ATC', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto('https://www.decathlon.my/');
 
@@ -24,7 +24,7 @@ test.beforeAll(async ({ browser }) => {
   await page.getByTestId('productHit-tilesbox-gridcell').first().click();
   await page.getByRole('button', { name: 'Add to Cart' }).nth(1).click();
   await expect(page.getByText(/added to cart|in your cart/i).first()).toBeVisible();
-});**/
+});
 
 declare const require: any;
 declare const process: any;
@@ -81,18 +81,24 @@ const productsToBuy: ProductItem[] = rawContent
 async function addProductToCart(page: Page, product: ProductItem) {
   const { sku, name, size: intendedSize } = product;
   console.log(`\n▶ Processing: ${name} (SKU: ${sku})`);
-  const searchBox = page.getByPlaceholder(/Search/i).first();
+  const searchBox = page.getByPlaceholder(/Search/i);
+
+  //if (!page.url().includes('decathlon.my') || page.url().includes('/product/') || page.url().includes('/search')) {
+    await page.goto('https://www.decathlon.my/', { waitUntil: 'networkidle' });
   
+
   try {
     await searchBox.waitFor({ state: 'visible', timeout: 10000 });
-    await searchBox.click();
     await searchBox.fill(''); 
     await searchBox.fill(sku); 
+    await searchBox.click();
+
     await Promise.all([
-      page.waitForURL(/.*search|.*products.*/i, { timeout: 15000 }),
+      //page.waitForURL(/.*search|.*products.*/i, { timeout: 15000 }),
       page.keyboard.press('Enter')
-    ]);
+    ]);  
   } catch (e) {
+    console.log(`\x1b[31m❌ SKU: ${sku} - Search box not found or search failed.\x1b[0m`);
     await page.locator('button[type="submit"]').first().click({ force: true });
   }
 
@@ -234,14 +240,14 @@ test('1.1 CSV Parsed - Multiple items search & ATC', async ({ page }) => {
   
   await page.setViewportSize({ width: 1280, height: 720 });
   await sharedPage.goto('https://www.decathlon.my/', { waitUntil: 'domcontentloaded' });
-  
-  // Pre handling Cookies
+   
+  /* Pre handling Cookies - retire first to avoid unnecessary popups
   const acceptBtn = page.getByRole('button', { name: 'Got It' });
   try {
     await acceptBtn.waitFor({ state: 'visible', timeout: 3000 });
     await acceptBtn.click();
   } catch (error) {
-  }
+  }*/
 
   // Loop through CSV products
   for (const product of productsToBuy) {
