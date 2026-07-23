@@ -9,7 +9,7 @@ test.beforeAll(async ({ browser }) => {
   sharedPage = await context.newPage();
 });
 
-//Retired - Hardcoded upgraded to CSV driven reading - See 1.1 for the new version 
+/*Retired - Hardcoded upgraded to CSV driven reading - See 1.1 for the new version 
   test('1.0 Hard Coded - Single item search & ATC', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto('https://www.decathlon.my/');
@@ -24,7 +24,7 @@ test.beforeAll(async ({ browser }) => {
   await page.getByTestId('productHit-tilesbox-gridcell').first().click();
   await page.getByRole('button', { name: 'Add to Cart' }).nth(1).click();
   await expect(page.getByText(/added to cart|in your cart/i).first()).toBeVisible();
-});
+});*/
 
 declare const require: any;
 declare const process: any;
